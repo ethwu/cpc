@@ -1,4 +1,5 @@
 use decimal::d128;
+use std::fmt;
 use crate::Number;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -37,7 +38,7 @@ use UnitType::*;
 // and evaluator
 macro_rules! create_units {
   ( $( $variant:ident : $properties:expr ),*, ) => {
-    #[derive(Clone, Copy, PartialEq, Debug)]
+    #[derive(Clone, Copy, PartialEq)]
     /// A Unit enum. Note that it can also be `NoUnit`.
     pub enum Unit {
       $($variant),*
@@ -59,172 +60,200 @@ macro_rules! create_units {
           ),*
         }
       }
+      pub fn symbol(&self) -> &'static str {
+        match self {
+          $(
+            Unit::$variant => $properties.2
+          ),*
+        }
+      }
+    }
+
+    impl fmt::Debug for Unit {
+      fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+          $(
+            Unit::$variant => write!(f, "{}", stringify!($variant))
+          ),*
+        }
+      }
+    }
+
+    impl fmt::Display for Unit {
+      fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let symbol = self.symbol();
+        if symbol.is_empty() {
+          fmt::Debug::fmt(self, f)
+        } else {
+          write!(f, "{}", symbol)
+        }
+      }
     }
   }
 }
 
 create_units!(
-  NoUnit:             (NoType, d128!(1)),
+  NoUnit:             (NoType, d128!(1), ""),
 
-  Nanosecond:         (Time, d128!(1)),
-  Microsecond:        (Time, d128!(1000)),
-  Millisecond:        (Time, d128!(1000000)),
-  Second:             (Time, d128!(1000000000)),
-  Minute:             (Time, d128!(60000000000)),
-  Hour:               (Time, d128!(3600000000000)),
-  Day:                (Time, d128!(86400000000000)),
-  Week:               (Time, d128!(604800000000000)),
-  Month:              (Time, d128!(2629746000000000)),
-  Quarter:            (Time, d128!(7889238000000000)),
-  Year:               (Time, d128!(31556952000000000)),
-  Decade:             (Time, d128!(315569520000000000)),
-  Century:            (Time, d128!(3155695200000000000)),
-  Millenium:          (Time, d128!(31556952000000000000)),
+  Nanosecond:         (Time, d128!(1), "ns"),
+  Microsecond:        (Time, d128!(1000), "µs"),
+  Millisecond:        (Time, d128!(1000000), "ms"),
+  Second:             (Time, d128!(1000000000), "s"),
+  Minute:             (Time, d128!(60000000000), "min"),
+  Hour:               (Time, d128!(3600000000000), "h"),
+  Day:                (Time, d128!(86400000000000), "d"),
+  Week:               (Time, d128!(604800000000000), "wk"),
+  Month:              (Time, d128!(2629746000000000), "mo"),
+  Quarter:            (Time, d128!(7889238000000000), "q"),
+  Year:               (Time, d128!(31556952000000000), "yr"),
+  Decade:             (Time, d128!(315569520000000000), ""),
+  Century:            (Time, d128!(3155695200000000000), ""),
+  Millenium:          (Time, d128!(31556952000000000000), ""),
 
-  Millimeter:         (Length, d128!(1)),
-  Centimeter:         (Length, d128!(10)),
-  Decimeter:          (Length, d128!(100)),
-  Meter:              (Length, d128!(1000)),
-  Kilometer:          (Length, d128!(1000000)),
-  Inch:               (Length, d128!(25.4)),
-  Foot:               (Length, d128!(304.8)),
-  Yard:               (Length, d128!(914.4)),
-  Mile:               (Length, d128!(1609344)),
+  Millimeter:         (Length, d128!(1), "mm"),
+  Centimeter:         (Length, d128!(10), "cm"),
+  Decimeter:          (Length, d128!(100), "dm"),
+  Meter:              (Length, d128!(1000), "m"),
+  Kilometer:          (Length, d128!(1000000), "km"),
+  Inch:               (Length, d128!(25.4), "in"),
+  Foot:               (Length, d128!(304.8), "ft"),
+  Yard:               (Length, d128!(914.4), "yd"),
+  Mile:               (Length, d128!(1609344), "mi"),
   // 1-dimensional only:
-  NauticalMile:       (Length, d128!(1852000)),
-  LightYear:          (Length, d128!(9460730472580800000)),
-  LightSecond:        (Length, d128!(299792458000)),
+  NauticalMile:       (Length, d128!(1852000), "nmi"),
+  LightYear:          (Length, d128!(9460730472580800000), "ly"),
+  LightSecond:        (Length, d128!(299792458000), ""),
 
-  SquareMillimeter:   (Area, d128!(1)),
-  SquareCentimeter:   (Area, d128!(100)),
-  SquareDecimeter:    (Area, d128!(10000)),
-  SquareMeter:        (Area, d128!(1000000)),
-  SquareKilometer:    (Area, d128!(1000000000000)),
-  SquareInch:         (Area, d128!(645.16)),
-  SquareFoot:         (Area, d128!(92903.04)),
-  SquareYard:         (Area, d128!(836127.36)),
-  SquareMile:         (Area, d128!(2589988110336.00)),
+  SquareMillimeter:   (Area, d128!(1), "mm²"),
+  SquareCentimeter:   (Area, d128!(100), "cm²"),
+  SquareDecimeter:    (Area, d128!(10000), "dm²"),
+  SquareMeter:        (Area, d128!(1000000), "m²"),
+  SquareKilometer:    (Area, d128!(1000000000000), "km²"),
+  SquareInch:         (Area, d128!(645.16), "in²"),
+  SquareFoot:         (Area, d128!(92903.04), "ft²"),
+  SquareYard:         (Area, d128!(836127.36), "yd²"),
+  SquareMile:         (Area, d128!(2589988110336.00), "mi²"),
   // 2-dimensional only
-  Are:                (Area, d128!(100000000)),
-  Decare:             (Area, d128!(1000000000)),
-  Hectare:            (Area, d128!(10000000000)),
-  Acre:               (Area, d128!(4046856422.40)),
+  Are:                (Area, d128!(100000000), ""),
+  Decare:             (Area, d128!(1000000000), ""),
+  Hectare:            (Area, d128!(10000000000), "ha"),
+  Acre:               (Area, d128!(4046856422.40), ""),
 
-  CubicMillimeter:    (Volume, d128!(1)),
-  CubicCentimeter:    (Volume, d128!(1000)),
-  CubicDecimeter:     (Volume, d128!(1000000)),
-  CubicMeter:         (Volume, d128!(1000000000)),
-  CubicKilometer:     (Volume, d128!(1000000000000000000)),
-  CubicInch:          (Volume, d128!(16387.064)),
-  CubicFoot:          (Volume, d128!(28316846.592)),
-  CubicYard:          (Volume, d128!(764554857.984)),
-  CubicMile:          (Volume, d128!(4168181825440579584)),
+  CubicMillimeter:    (Volume, d128!(1), "cm³"),
+  CubicCentimeter:    (Volume, d128!(1000), "cm³"),
+  CubicDecimeter:     (Volume, d128!(1000000), "dm³"),
+  CubicMeter:         (Volume, d128!(1000000000), "m³"),
+  CubicKilometer:     (Volume, d128!(1000000000000000000), "km³"),
+  CubicInch:          (Volume, d128!(16387.064), "in³"),
+  CubicFoot:          (Volume, d128!(28316846.592), "ft³"),
+  CubicYard:          (Volume, d128!(764554857.984), "yd³"),
+  CubicMile:          (Volume, d128!(4168181825440579584), "mi³"),
   // 3-dimensional only
-  Milliliter:         (Volume, d128!(1000)),
-  Centiliter:         (Volume, d128!(10000)),
-  Deciliter:          (Volume, d128!(100000)),
-  Liter:              (Volume, d128!(1000000)),
-  Teaspoon:           (Volume, d128!(4928.92159375)),
-  Tablespoon:         (Volume, d128!(14786.76478125)),
-  FluidOunce:         (Volume, d128!(29573.5295625)),
-  Cup:                (Volume, d128!(236588.2365)),
-  Pint:               (Volume, d128!(473176.473)),
-  Quart:              (Volume, d128!(946352.946)),
-  Gallon:             (Volume, d128!(3785411.784)),
-  OilBarrel:          (Volume, d128!(158987294.928)),
+  Milliliter:         (Volume, d128!(1000), "mL"),
+  Centiliter:         (Volume, d128!(10000), "cL"),
+  Deciliter:          (Volume, d128!(100000), "dL"),
+  Liter:              (Volume, d128!(1000000), "L"),
+  Teaspoon:           (Volume, d128!(4928.92159375), "tsp"),
+  Tablespoon:         (Volume, d128!(14786.76478125), "tbsp"),
+  FluidOunce:         (Volume, d128!(29573.5295625), "fl oz"),
+  Cup:                (Volume, d128!(236588.2365), ""),
+  Pint:               (Volume, d128!(473176.473), "pt"),
+  Quart:              (Volume, d128!(946352.946), "qt"),
+  Gallon:             (Volume, d128!(3785411.784), "gal"),
+  OilBarrel:          (Volume, d128!(158987294.928), "bbl"),
 
-  Milligram:          (Mass, d128!(0.001)),
-  Gram:               (Mass, d128!(1)),
-  Hectogram:          (Mass, d128!(100)),
-  Kilogram:           (Mass, d128!(1000)),
-  MetricTon:          (Mass, d128!(1000000)),
-  Ounce:              (Mass, d128!(28.349523125)),
-  Pound:              (Mass, d128!(453.59237)),
-  ShortTon:           (Mass, d128!(907184.74)),
-  LongTon:            (Mass, d128!(1016046.9088)),
+  Milligram:          (Mass, d128!(0.001), "mg"),
+  Gram:               (Mass, d128!(1), "g"),
+  Hectogram:          (Mass, d128!(100), "hg"),
+  Kilogram:           (Mass, d128!(1000), "kg"),
+  MetricTon:          (Mass, d128!(1000000), "t"),
+  Ounce:              (Mass, d128!(28.349523125), "oz"),
+  Pound:              (Mass, d128!(453.59237), "lb"),
+  ShortTon:           (Mass, d128!(907184.74), "st"),
+  LongTon:            (Mass, d128!(1016046.9088), "lt"),
 
-  Bit:                (DigitalStorage, d128!(1)),
-  Kilobit:            (DigitalStorage, d128!(1000)),
-  Megabit:            (DigitalStorage, d128!(1000000)),
-  Gigabit:            (DigitalStorage, d128!(1000000000)),
-  Terabit:            (DigitalStorage, d128!(1000000000000)),
-  Petabit:            (DigitalStorage, d128!(1000000000000000)),
-  Exabit:             (DigitalStorage, d128!(1000000000000000000)),
-  Zettabit:           (DigitalStorage, d128!(1000000000000000000000)),
-  Yottabit:           (DigitalStorage, d128!(1000000000000000000000000)),
-  Kibibit:            (DigitalStorage, d128!(1024)),
-  Mebibit:            (DigitalStorage, d128!(1048576)),
-  Gibibit:            (DigitalStorage, d128!(1073741824)),
-  Tebibit:            (DigitalStorage, d128!(1099511627776)),
-  Pebibit:            (DigitalStorage, d128!(1125899906842624)),
-  Exbibit:            (DigitalStorage, d128!(1152921504606846976)),
-  Zebibit:            (DigitalStorage, d128!(1180591620717411303424)),
-  Yobibit:            (DigitalStorage, d128!(1208925819614629174706176)),
-  Byte:               (DigitalStorage, d128!(8)),
-  Kilobyte:           (DigitalStorage, d128!(8000)),
-  Megabyte:           (DigitalStorage, d128!(8000000)),
-  Gigabyte:           (DigitalStorage, d128!(8000000000)),
-  Terabyte:           (DigitalStorage, d128!(8000000000000)),
-  Petabyte:           (DigitalStorage, d128!(8000000000000000)),
-  Exabyte:            (DigitalStorage, d128!(8000000000000000000)),
-  Zettabyte:          (DigitalStorage, d128!(8000000000000000000000)),
-  Yottabyte:          (DigitalStorage, d128!(8000000000000000000000000)),
-  Kibibyte:           (DigitalStorage, d128!(8192)),
-  Mebibyte:           (DigitalStorage, d128!(8388608)),
-  Gibibyte:           (DigitalStorage, d128!(8589934592)),
-  Tebibyte:           (DigitalStorage, d128!(8796093022208)),
-  Pebibyte:           (DigitalStorage, d128!(9007199254740992)),
-  Exbibyte:           (DigitalStorage, d128!(9223372036854775808)),
-  Zebibyte:           (DigitalStorage, d128!(9444732965739290427392)),
-  Yobibyte:           (DigitalStorage, d128!(9671406556917033397649408)),
+  Bit:                (DigitalStorage, d128!(1), ""),
+  Kilobit:            (DigitalStorage, d128!(1000), ""),
+  Megabit:            (DigitalStorage, d128!(1000000), ""),
+  Gigabit:            (DigitalStorage, d128!(1000000000), ""),
+  Terabit:            (DigitalStorage, d128!(1000000000000), ""),
+  Petabit:            (DigitalStorage, d128!(1000000000000000), ""),
+  Exabit:             (DigitalStorage, d128!(1000000000000000000), ""),
+  Zettabit:           (DigitalStorage, d128!(1000000000000000000000), ""),
+  Yottabit:           (DigitalStorage, d128!(1000000000000000000000000), ""),
+  Kibibit:            (DigitalStorage, d128!(1024), ""),
+  Mebibit:            (DigitalStorage, d128!(1048576), ""),
+  Gibibit:            (DigitalStorage, d128!(1073741824), ""),
+  Tebibit:            (DigitalStorage, d128!(1099511627776), ""),
+  Pebibit:            (DigitalStorage, d128!(1125899906842624), ""),
+  Exbibit:            (DigitalStorage, d128!(1152921504606846976), ""),
+  Zebibit:            (DigitalStorage, d128!(1180591620717411303424), ""),
+  Yobibit:            (DigitalStorage, d128!(1208925819614629174706176), ""),
+  Byte:               (DigitalStorage, d128!(8), "B"),
+  Kilobyte:           (DigitalStorage, d128!(8000), "kB"),
+  Megabyte:           (DigitalStorage, d128!(8000000), "MB"),
+  Gigabyte:           (DigitalStorage, d128!(8000000000), "GB"),
+  Terabyte:           (DigitalStorage, d128!(8000000000000), "TB"),
+  Petabyte:           (DigitalStorage, d128!(8000000000000000), "PB"),
+  Exabyte:            (DigitalStorage, d128!(8000000000000000000), "EB"),
+  Zettabyte:          (DigitalStorage, d128!(8000000000000000000000), "ZB"),
+  Yottabyte:          (DigitalStorage, d128!(8000000000000000000000000), "YB"),
+  Kibibyte:           (DigitalStorage, d128!(8192), "KiB"),
+  Mebibyte:           (DigitalStorage, d128!(8388608), "MiB"),
+  Gibibyte:           (DigitalStorage, d128!(8589934592), "GiB"),
+  Tebibyte:           (DigitalStorage, d128!(8796093022208), "TiB"),
+  Pebibyte:           (DigitalStorage, d128!(9007199254740992), "PiB"),
+  Exbibyte:           (DigitalStorage, d128!(9223372036854775808), "EiB"),
+  Zebibyte:           (DigitalStorage, d128!(9444732965739290427392), "ZiB"),
+  Yobibyte:           (DigitalStorage, d128!(9671406556917033397649408), "YiB"),
 
-  Millijoule:         (Energy, d128!(0.001)),
-  Joule:              (Energy, d128!(1)),
-  NewtonMeter:        (Energy, d128!(1)),
-  Kilojoule:          (Energy, d128!(1000)),
-  Megajoule:          (Energy, d128!(1000000)),
-  Gigajoule:          (Energy, d128!(1000000000)),
-  Terajoule:          (Energy, d128!(1000000000000)),
-  Calorie:            (Energy, d128!(4.1868)),
-  KiloCalorie:        (Energy, d128!(4186.8)),
-  BritishThermalUnit: (Energy, d128!(1055.05585262)),
-  WattHour:           (Energy, d128!(3600)),
-  KilowattHour:       (Energy, d128!(3600000)),
-  MegawattHour:       (Energy, d128!(3600000000)),
-  GigawattHour:       (Energy, d128!(3600000000000)),
-  TerawattHour:       (Energy, d128!(3600000000000000)),
-  PetawattHour:       (Energy, d128!(3600000000000000000)),
+  Millijoule:         (Energy, d128!(0.001), "mJ"),
+  Joule:              (Energy, d128!(1), "J"),
+  NewtonMeter:        (Energy, d128!(1), "N m"),
+  Kilojoule:          (Energy, d128!(1000), "kJ"),
+  Megajoule:          (Energy, d128!(1000000), "MJ"),
+  Gigajoule:          (Energy, d128!(1000000000), "GJ"),
+  Terajoule:          (Energy, d128!(1000000000000), "TJ"),
+  Calorie:            (Energy, d128!(4.1868), "cal"),
+  KiloCalorie:        (Energy, d128!(4186.8), "kcal"),
+  BritishThermalUnit: (Energy, d128!(1055.05585262), "BTU"),
+  WattHour:           (Energy, d128!(3600), "W h"),
+  KilowattHour:       (Energy, d128!(3600000), "kW h"),
+  MegawattHour:       (Energy, d128!(3600000000), "MW h"),
+  GigawattHour:       (Energy, d128!(3600000000000), "GW h"),
+  TerawattHour:       (Energy, d128!(3600000000000000), "TW h"),
+  PetawattHour:       (Energy, d128!(3600000000000000000), "PW h"),
 
-  Milliwatt:                    (Power, d128!(0.001)),
-  Watt:                         (Power, d128!(1)),
-  Kilowatt:                     (Power, d128!(1000)),
-  Megawatt:                     (Power, d128!(1000000)),
-  Gigawatt:                     (Power, d128!(1000000000)),
-  Terawatt:                     (Power, d128!(1000000000000)),
-  Petawatt:                     (Power, d128!(1000000000000000)),
-  BritishThermalUnitsPerMinute: (Power, d128!(0.0568690272188)), // probably inexact
-  BritishThermalUnitsPerHour:   (Power, d128!(3.412141633128)), // probably inexact
-  Horsepower:                   (Power, d128!(745.69987158227022)), // exact according to wikipedia
-  MetricHorsepower:             (Power, d128!(735.49875)),
+  Milliwatt:                    (Power, d128!(0.001), "mW"),
+  Watt:                         (Power, d128!(1), "W"),
+  Kilowatt:                     (Power, d128!(1000), "kW"),
+  Megawatt:                     (Power, d128!(1000000), "MW"),
+  Gigawatt:                     (Power, d128!(1000000000), "GW"),
+  Terawatt:                     (Power, d128!(1000000000000), "TW"),
+  Petawatt:                     (Power, d128!(1000000000000000), "PW"),
+  BritishThermalUnitsPerMinute: (Power, d128!(0.0568690272188), "BTU/min"), // probably inexact
+  BritishThermalUnitsPerHour:   (Power, d128!(3.412141633128), "BTU/h"), // probably inexact
+  Horsepower:                   (Power, d128!(745.69987158227022), "hp"), // exact according to wikipedia
+  MetricHorsepower:             (Power, d128!(735.49875), "mhp"),
 
-  Pascal:                       (Pressure, d128!(1)),
-  Kilopascal:                   (Pressure, d128!(1000)),
-  Atmosphere:                   (Pressure, d128!(101325)),
-  Millibar:                     (Pressure, d128!(100)),
-  Bar:                          (Pressure, d128!(100000)),
-  InchOfMercury:                (Pressure, d128!(3386.389)),
-  PoundsPerSquareInch:          (Pressure, d128!(6894.757293168361)), // inexact
-  Torr:                         (Pressure, d128!(162.12)),
+  Pascal:                       (Pressure, d128!(1), "Pa"),
+  Kilopascal:                   (Pressure, d128!(1000), "kPa"),
+  Atmosphere:                   (Pressure, d128!(101325), "atm"),
+  Millibar:                     (Pressure, d128!(100), "mbar"),
+  Bar:                          (Pressure, d128!(100000), "bar"),
+  InchOfMercury:                (Pressure, d128!(3386.389), "inHg"),
+  PoundsPerSquareInch:          (Pressure, d128!(6894.757293168361), "psi"), // inexact
+  Torr:                         (Pressure, d128!(162.12), "Torr"),
 
-  KilometersPerHour:  (Speed, d128!(1)),
-  MetersPerSecond:    (Speed, d128!(3.6)),
-  MilesPerHour:       (Speed, d128!(1.609344)),
-  FeetPerSecond:      (Speed, d128!(1.09728)),
-  Knot:               (Speed, d128!(1.852)),
+  KilometersPerHour:  (Speed, d128!(1), "km/h"),
+  MetersPerSecond:    (Speed, d128!(3.6), "m/s"),
+  MilesPerHour:       (Speed, d128!(1.609344), "mph"),
+  FeetPerSecond:      (Speed, d128!(1.09728), "ft/s"),
+  Knot:               (Speed, d128!(1.852), "kn"),
 
-  Kelvin:             (Temperature, d128!(0)),
-  Celcius:            (Temperature, d128!(0)),
-  Fahrenheit:         (Temperature, d128!(0)),
+  Kelvin:             (Temperature, d128!(0), "K"),
+  Celcius:            (Temperature, d128!(0), "°C"),
+  Fahrenheit:         (Temperature, d128!(0), "°F"),
 );
 
 /// Returns the conversion factor between two units.
