@@ -35,6 +35,7 @@ pub mod parser;
 /// Turns an [`AstNode`](struct.AstNode.html) into a [`Number`](struct.Number.html)
 pub mod evaluator;
 mod lookup;
+mod ops;
 
 #[derive(Clone, Debug)]
 /// A number with a `Unit`.

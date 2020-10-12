@@ -1,6 +1,7 @@
 use decimal::d128;
 use std::fmt;
 use crate::Number;
+use crate::ops;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 /// An enum of all possible unit types, like `Length`, `DigitalStorage` etc.
@@ -312,10 +313,10 @@ pub fn convert_to_lowest(left: Number, right: Number) -> Result<(Number, Number)
 /// Return the sum of two [`Number`](enum.Number.html)s
 pub fn add(left: Number, right: Number) -> Result<Number, String> {
   if left.unit == right.unit {
-    Ok(Number::new(left.value + right.value, left.unit))
+    Ok(Number::new(ops::add(left.value, right.value), left.unit))
   } else if left.unit.category() == right.unit.category() && left.unit.category() != Temperature {
     let (left, right) = convert_to_lowest(left, right)?;
-    Ok(Number::new(left.value + right.value, left.unit))
+    Ok(Number::new(ops::add(left.value, right.value), left.unit))
   } else {
     return Err(format!("Cannot add {:?} and {:?}", left.unit, right.unit))
   }
@@ -324,10 +325,10 @@ pub fn add(left: Number, right: Number) -> Result<Number, String> {
 /// Subtract a [`Number`](enum.Number.html) from another [`Number`](enum.Number.html)
 pub fn subtract(left: Number, right: Number) -> Result<Number, String> {
   if left.unit == right.unit {
-    Ok(Number::new(left.value - right.value, left.unit))
+    Ok(Number::new(ops::sub(left.value, right.value), left.unit))
   } else if left.unit.category() == right.unit.category() && left.unit.category() != Temperature {
     let (left, right) = convert_to_lowest(left, right)?;
-    Ok(Number::new(left.value - right.value, left.unit))
+    Ok(Number::new(ops::sub(left.value, right.value), left.unit))
   } else {
     return Err(format!("Cannot subtract {:?} by {:?}", left.unit, right.unit))
   }
@@ -404,15 +405,15 @@ pub fn multiply(left: Number, right: Number) -> Result<Number, String> {
     Ok(Number::new(left.value * right.value, left.unit))
   } else if lcat == Length && rcat == Length {
     // length * length
-    let result = (left.value * left.unit.weight()) * (right.value * right.unit.weight());
+    let result = ops::mul(left.value * left.unit.weight(), right.value * right.unit.weight());
     Ok(to_ideal_unit(Number::new(result, SquareMillimeter)))
   } else if (lcat == Length && rcat == Area) || (lcat == Area && rcat == Length) {
     // length * area, area * length
-    let result = (left.value * left.unit.weight()) * (right.value * right.unit.weight());
+    let result = ops::mul(left.value * left.unit.weight(), right.value * right.unit.weight());
     Ok(to_ideal_unit(Number::new(result, CubicMillimeter)))
   } else if lcat == Speed && rcat == Time {
     // 1 km/h * 1h
-    let kph_value = left.value * left.unit.weight();
+    let kph_value = ops::mul(left.value, left.unit.weight());
     let hours = convert(right, Hour)?;
     let result = kph_value * hours.value;
     let final_unit = match left.unit {
@@ -451,14 +452,14 @@ pub fn divide(left: Number, right: Number) -> Result<Number, String> {
   } else if lcat == rcat {
     // 1 km / 1 km
     let (left, right) = convert_to_lowest(left, right)?;
-    Ok(Number::new(left.value / right.value, NoUnit))
+    Ok(Number::new(ops::div(left.value, right.value), NoUnit))
   } else if (lcat == Area && rcat == Length) || (lcat == Volume && rcat == Area) {
     // 1 km2 / 1 km, 1 km3 / 1 km2
-    let result = (left.value * left.unit.weight()) / (right.value * right.unit.weight());
+    let result = ops::div(left.value * left.unit.weight(), right.value * right.unit.weight());
     Ok(to_ideal_unit(Number::new(result, Millimeter)))
   } else if lcat == Volume && rcat == Length {
     // 1 km3 / 1 km
-    let result = (left.value * left.unit.weight()) / (right.value * right.unit.weight());
+    let result = ops::div(left.value * left.unit.weight(), right.value * right.unit.weight());
     Ok(to_ideal_unit(Number::new(result, SquareMillimeter)))
   } else if lcat == Length && rcat == Time {
     // 1 km / 2s
@@ -472,7 +473,7 @@ pub fn divide(left: Number, right: Number) -> Result<Number, String> {
     };
     let kilometers = convert(left, Kilometer)?;
     let hours = convert(right, Hour)?;
-    let kph = Number::new(kilometers.value / hours.value, KilometersPerHour);
+    let kph = Number::new(ops::div(kilometers.value, hours.value), KilometersPerHour);
     Ok(convert(kph, final_unit)?)
   } else {
     Err(format!("Cannot divide {:?} by {:?}", left.unit, right.unit))
@@ -490,7 +491,7 @@ pub fn modulo(left: Number, right: Number) -> Result<Number, String> {
   } else if left.unit.category() == right.unit.category() {
     // 5 km % 3 m
     let (left, right) = convert_to_lowest(left, right)?;
-    Ok(Number::new(left.value % right.value, left.unit))
+    Ok(Number::new(ops::rem(left.value, right.value), left.unit))
   } else {
     Err(format!("Cannot modulo {:?} by {:?}", left.unit, right.unit))
   }

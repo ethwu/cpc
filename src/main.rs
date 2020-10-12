@@ -17,10 +17,11 @@ fn main() {
     match eval(&args[1], true, Unit::Celcius, debug) {
       Ok(answer) => {
         if !debug {
+          print!("{} ", answer.value);
           if verbose {
-            println!("{} {:?}", answer.value, answer.unit)
+            println!("{:?}", answer.unit)
           } else {
-            println!("{} {}", answer.value, answer.unit)
+            println!("{}", answer.unit)
           }
         }
       },
